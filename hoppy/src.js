@@ -1,36 +1,42 @@
 const hero = builtin("char12");
+const energy = builtin("char11");
 const wep = builtin("sSword");
 const tramp = builtin("shape6");
 const tramp3 = builtin("shape8");
 const house = builtin("building2");
 const boon = builtin("char29");
 
+const tree = builtin("tree1");
+const grass = builtin("floor4");
+
+const floor = builtin("floor3");
+
 const cloud = builtin("char28");
+const fire = builtin("fireball");
 
-var x = 20, y = 140, g = 4, vy = 0, vx = 0, tl = 70, tr = 142, bx = 100, by = 60, bs = 0, score = 0;
-var dx = 0, dy = 0;
-
-var side = false;
 const trampY = 150;
-
-var jumping = false, start = false;
 
 const HERO_IDX = 2;
 const BOON_IDX = 1;
 
-function collide(){
-    console("X: ");
-    console(bx);
-    console("Y: ");
-    console(by);
-    dx = bx;
-    dy = by;
-    bx = random(30, 180);
-    by = 0;
-    score += 10;
-}
+var eng = 11, cooldown = 10, combo = 0, finalScore = 0;
+var x = 20, y = 140, g = 4, vy = 0, vx = 0, tl = 70, tr = 142, bx = 100, by = 60, bs = 0, score = 0;
+var dx = 0, dy = -16;
 
-window(16, 0, 205, 180);
+var jumping = false, start = false, attack = false, gameover = false, side = false;
+
+function collide(){
+    if(attack){
+        dx = bx;
+        dy = by;
+        bx = random(30, 180);
+        by = 0;
+        score += 10 + (combo * 5);
+        combo++;
+    }
+    vy = -8;
+    vx = random(-4, 4);
+}
 
 function move(){
     //reset acceleration
@@ -74,7 +80,7 @@ function move(){
 }
 
 function updateBoon(){
-    if(by <  40){
+    if(by < 40){
         by+=3;
     }
     if(bs == 0){
@@ -92,7 +98,7 @@ function updateBoon(){
     bs--;
     
     //dead boon
-    if(dy > -10){
+    if(dy > -16){
         dy--;
     }
 }
@@ -100,21 +106,24 @@ function updateBoon(){
 function render(){
     fill(130);
     background(1);
+    sprite(32, 140, tree);
+    //Grass
+    for(var i = 0; i < 14; i++){
+        sprite(i*16, 154, grass);
+        sprite(i*16, 160, grass);
+    }
     
-    if(pressed("A") && start){
-        sprite(x, y, hero);
-        
-        io("COLLISION", HERO_IDX, 0);
+    io("COLLISION", HERO_IDX, 0);
+    sprite(x, y, hero);
+    if(pressed("A") && attack && start){
         if(side){
             sprite(x+12, y+4, wep);
         }else{
             mirror(true);
-            
             sprite(x-4, y+4, wep);
             mirror(false);
         }
     }else{
-        sprite(x, y, hero);
         if(y > 130){
             if((x > tl) && (x < tr)){
                 for(var i = 2; i < 4; i++){
@@ -125,7 +134,6 @@ function render(){
             }
         }
     }
-
     
     for(var i = 0; i < 6; i++){
         color(248);
@@ -135,12 +143,18 @@ function render(){
     color(0);
     
     sprite(16, 140, house);
-    for(var i = 0; i < 30; i++){
-        tile(i, 21, 206);
-        tile(i, 20, 206);
-        tile(i, 19, 206);
+    
+    //energy 
+    for(var i = 0; i < 11; i++){
+        sprite(0, 138-(i*16), floor);
+    }
+    for(var i = 0; i < eng; i++){
+        sprite(0, 138-(i*14), energy);
     }
     
+    for(var i = 0; i < combo; i++){
+        sprite(4+i*16, 160, fire);
+    }
     
     //boon
     io("COLLISION", BOON_IDX, HERO_IDX, collide);
@@ -160,6 +174,19 @@ function update(){
         exit();
     }
     
+    if(gameover){
+        cursor(45, 80);
+        print("Game Over");
+        cursor(45, 90);
+        print("Final score: ");
+        printNumber(finalScore);
+        if(pressed("A")){
+            gameover = false;
+            start = false;
+        }
+        return;
+    }
+    
     if(!start){
         move();
         render();
@@ -175,28 +202,43 @@ function update(){
     
     move();
     updateBoon();
-
+    
+    if(cooldown > 0){
+        cooldown--;
+    }else{
+        attack = false;
+    }
+    
+    if(justPressed("A") && !attack && cooldown == 0 && eng > 0){
+        attack = true;
+        cooldown = 10;
+        eng--;
+    }
     
     if(!pressed("A")){
-        // draw lower trampoline
-
         // if trampoline bottom, start jump
         if(y > 138) {
             if((x > tl) && (x < tr)){
                 jumping = true;
+                combo = 0;
                 y = 100;
-                if(pressed("UP")){
+                if(pressed("UP") && eng > 0){
+                    eng--;
+                    //super jump
                     vy = -14;
+                    if(x < (tl+40)){
+                        vx = -8;
+                    }
+                    if(x > (tr-40)){
+                        vx = 8;
+                    }
                 }else{
+                    if(eng < 11){
+                        eng++;
+                    }
+                    //jump normal
                     vy = -6;
                 }
-                if(x < (tl+40)){
-                    vx = -8;
-                }
-                if(x > (tr-40)){
-                    vx = 8;
-                }
-                
             }
         }
     }
@@ -205,7 +247,11 @@ function update(){
     if(y > 140){
         y = 140;
         vy = 0;
+        highscore(score);
+        finalScore = score;
         score = 0;
+        gameover = true;
+        start = false;
     }
     
     render();
