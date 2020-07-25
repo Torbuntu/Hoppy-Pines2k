@@ -1,12 +1,16 @@
 const hero = builtin("char12");
-const heroA = builtin("char11");
+const wep = builtin("sSword");
 const tramp = builtin("shape6");
 const tramp3 = builtin("shape8");
 const house = builtin("building2");
-const boon = builtin("shape2");
+const boon = builtin("char29");
+
+const cloud = builtin("char28");
 
 var x = 20, y = 140, g = 4, vy = 0, vx = 0, tl = 70, tr = 142, bx = 100, by = 60, bs = 0, score = 0;
+var dx = 0, dy = 0;
 
+var side = false;
 const trampY = 150;
 
 var jumping = false, start = false;
@@ -15,9 +19,14 @@ const HERO_IDX = 2;
 const BOON_IDX = 1;
 
 function collide(){
-    console("WHOOP!");
+    console("X: ");
+    console(bx);
+    console("Y: ");
+    console(by);
+    dx = bx;
+    dy = by;
     bx = random(30, 180);
-    by = random(40, 100);
+    by = 0;
     score += 10;
 }
 
@@ -28,9 +37,11 @@ function move(){
     ay = 0;
     if(pressed("LEFT")){
         vx-=2;
+        side = false;
     }
     if(pressed("RIGHT")){
         vx+=2;
+        side = true;
     }
 
     if(jumping){
@@ -49,37 +60,75 @@ function move(){
         vx++;
     }
     
+    if(x < 30){
+        x = 30;
+        vx = 0;
+    }
+    if(x > 180){
+        x = 180;
+        vx = 0;
+    }
+    
     y += vy;
     x += vx;
 }
 
 function updateBoon(){
-    if(bs == 0){
-        bs = 15;
-        bx += random(-1, 1);
-        by += random(-1, 1);
+    if(by <  40){
+        by+=3;
     }
+    if(bs == 0){
+        bs = 2;
+        bx += random(-2, 2);
+        by += random(-2, 2);
+    }
+    if(bx < 30) {
+        bx+=3;
+    }
+    if(bx > 180){
+        bx-=3;
+    }
+    
     bs--;
+    
+    //dead boon
+    if(dy > -10){
+        dy--;
+    }
 }
 
 function render(){
-    fill(86);
+    fill(130);
     background(1);
     
-    
     if(pressed("A") && start){
-        io("COLLISION", HERO_IDX, 0);
-        sprite(x, y, heroA);
-        score++;
-    }else{
-        io("COLLISION", HERO_IDX, 0);
         sprite(x, y, hero);
+        
+        io("COLLISION", HERO_IDX, 0);
+        if(side){
+            sprite(x+12, y+4, wep);
+        }else{
+            mirror(true);
+            
+            sprite(x-4, y+4, wep);
+            mirror(false);
+        }
+    }else{
+        sprite(x, y, hero);
+        if(y > 130){
+            if((x > tl) && (x < tr)){
+                for(var i = 2; i < 4; i++){
+                    color(248);
+                    sprite(i * 8 + 80, trampY+4, tramp);
+                    sprite(i * 8 + 98, trampY+4, tramp3);
+                }
+            }
+        }
     }
-
 
     
     for(var i = 0; i < 6; i++){
-        color(40);
+        color(248);
         sprite(i * 8 + 80, trampY, tramp);
         sprite(i * 8 + 98, trampY, tramp3);
     }
@@ -87,15 +136,17 @@ function render(){
     
     sprite(16, 140, house);
     for(var i = 0; i < 30; i++){
-        tile(i, 21, 32);
-        tile(i, 20, 31);
-        tile(i, 19, 31);
+        tile(i, 21, 206);
+        tile(i, 20, 206);
+        tile(i, 19, 206);
     }
     
     
     //boon
     io("COLLISION", BOON_IDX, HERO_IDX, collide);
     sprite(bx, by, boon);
+    
+    sprite(dx, dy, cloud);
     
     cursor(20, 0);
     print("Score:");
@@ -128,16 +179,7 @@ function update(){
     
     if(!pressed("A")){
         // draw lower trampoline
-        if(y > 130){
-            if((x > tl) && (x < tr)){
-                for(var i = 2; i < 4; i++){
-                    color(40);
-                    sprite(i * 8 + 80, trampY+4, tramp);
-                    sprite(i * 8 + 98, trampY+4, tramp3);
-                }
-                color(0);
-            }
-        }
+
         // if trampoline bottom, start jump
         if(y > 138) {
             if((x > tl) && (x < tr)){
@@ -149,10 +191,10 @@ function update(){
                     vy = -6;
                 }
                 if(x < (tl+40)){
-                    vx = -4;
+                    vx = -8;
                 }
                 if(x > (tr-40)){
-                    vx = 4;
+                    vx = 8;
                 }
                 
             }
@@ -167,5 +209,5 @@ function update(){
     }
     
     render();
-    
+
 }
