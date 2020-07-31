@@ -1,5 +1,5 @@
 const hero = builtin("char12");
-const energy = builtin("char11");
+const energy = builtin("sBolt");//builtin("char11");
 const wep = builtin("sSword");
 const tramp = builtin("shape6");
 const tramp3 = builtin("shape8");
@@ -105,7 +105,7 @@ function updateBoon(){
 
 function render(){
     fill(130);
-    background(1);
+    background(0);
     sprite(32, 140, tree);
     //Grass
     for(var i = 0; i < 14; i++){
@@ -156,17 +156,20 @@ function render(){
         sprite(4+i*16, 160, fire);
     }
     
+    
     //boon
     io("COLLISION", BOON_IDX, HERO_IDX, collide);
     sprite(bx, by, boon);
     
     sprite(dx, dy, cloud);
     
-    cursor(20, 0);
+    color(8);
+    cursor(16, 0);
     print("Score:");
     
-    cursor(20,16);
+    cursor(16,12);
     printNumber(score);
+    color(0);
 }
 
 function update(){
@@ -175,12 +178,22 @@ function update(){
     }
     
     if(gameover){
-        cursor(45, 80);
+        color(8);
+        cursor(20, 70);
         print("Game Over");
-        cursor(45, 90);
+        cursor(20, 80);
         print("Final score: ");
         printNumber(finalScore);
+        cursor(20, 90);
+        print("Press A to play again!");
+        color(0);
         if(pressed("A")){
+            jumping = false;
+            x = 20;
+            y = 140;
+            vx = 0;
+            vy = 0;
+            eng = 11;
             gameover = false;
             start = false;
         }
@@ -190,7 +203,7 @@ function update(){
     if(!start){
         move();
         render();
-        if(pressed("UP")){
+        if(pressed("B")){
             console("Start");
             start = true;
             jumping = true;
@@ -222,7 +235,7 @@ function update(){
                 jumping = true;
                 combo = 0;
                 y = 100;
-                if(pressed("UP") && eng > 0){
+                if(pressed("B") && eng > 0){
                     eng--;
                     //super jump
                     vy = -14;
@@ -245,8 +258,6 @@ function update(){
     
     // reset score if fall below trampoline
     if(y > 140){
-        y = 140;
-        vy = 0;
         highscore(score);
         finalScore = score;
         score = 0;
