@@ -1,5 +1,5 @@
 const hero = builtin("char12");
-const energy = builtin("sBolt");//builtin("char11");
+const energy = builtin("fireball");//builtin("char11");
 const wep = builtin("sSword");
 const tramp = builtin("shape6");
 const tramp3 = builtin("shape8");
@@ -148,9 +148,12 @@ function render(){
     for(var i = 0; i < 11; i++){
         sprite(0, 138-(i*16), floor);
     }
+    
+    color(48);
     for(var i = 0; i < eng; i++){
         sprite(0, 138-(i*14), energy);
     }
+    color(0);
     
     for(var i = 0; i < combo; i++){
         sprite(4+i*16, 160, fire);
